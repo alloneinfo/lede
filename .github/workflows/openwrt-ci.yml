@@ -7,11 +7,12 @@
 #
 name: OpenWrt-CI
 
-on:
-  schedule:
-    - cron: 0 20 * * *
-  release:
-    types: [published]
+on: workflow_dispatch
+# on:
+#  schedule:
+#    - cron: 0 20 * * *
+#  release:
+#    types: [published]
 
 jobs:
 
@@ -25,12 +26,12 @@ jobs:
 
     steps:
 
-      - name: Checkout
+      - name: 准备开始
         uses: actions/checkout@v2
         with:
           ref: master
 
-      - name: Space cleanup
+      - name: 初始化系统环境
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -44,21 +45,22 @@ jobs:
 
           df -h
 
-      - name: Update feeds
+      - name: 下载固件源代码
+
         run: |
           sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Generate configuration file
+      - name: 生成 configuration
         run: make defconfig
 
-      - name: Make download
+      - name: 下载相关源码
         run: |
           make download -j8
           find dl -size -1024c -exec rm -f {} \;
 
-      - name: Compile firmware
+      - name: 编译固件
         run: |
           make -j$(nproc) || make -j1 V=s
           echo "======================="
